@@ -37,3 +37,35 @@ class NoteForm(StatesGroup):
     remind_at = State()
 
 
+@dp.message(Command('start'))
+async def cmd_start(message:types.Message,state:FSMContext):
+    await state.clear()
+    await message.answer(
+        "Привіт! Щоб створити нотатку, натисни /new\nЩоб переглянути нотатки — /notes",
+        reply_markup=main_keyboard
+    )
+@dp.message(Command('new'))
+async def cmd_new(message:types.Message,state:FSMContext):
+    await state.clear()
+    await message.answer('Введи назву нотатки:')
+    await state.set_state(NoteForm.title)
+@dp.message(state = NoteForm.title)
+async def not_title(message:types.Message,state:FSMContext):
+    await state.update_data(title = message.text)
+    await message.answer("Введи опис нотатки")
+    await state.set_state(NoteForm.description)
+@dp.message(state = NoteForm.description)
+async def not_description(message:types.Message,state:FSMContext):
+    await state.update_data(description = message.text)
+    await message.answer("Введи дату та час нагадування у форматі: YYYY-MM-DD HH:MM (наприклад: 2025-03-29 17:30):")
+    await state.set_state(NoteForm.remind_at)
+@dp.message(state = NoteForm.remind_at)
+async def not_remind_at(message:types.Message,state:FSMContext):
+    try:
+        remind_time = datetime.strptime(message.text, "%Y-%m-%d %H:%M")
+    except ValueError:
+        await message.answer("Невірний формат! Спробуй ще раз: YYYY-MM-DD HH:MM")
+        return
+
+
+
